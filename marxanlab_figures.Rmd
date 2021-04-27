@@ -1,0 +1,56 @@
+---
+title: "lab_figs"
+author: "Bri Baker"
+date: "4/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(raster)
+library(rgdal)
+library(here)
+library(tmap)
+library(sf)
+library(sp)
+library(viridis)
+library(RColorBrewer)
+```
+
+```{r data}
+parcels <- st_read(here("data/MorroBay_parcels.shp"))
+
+basic_output <- read_csv(here("data/MBbasicoutput_ssoln.txt")) %>% 
+  rename("basic_sltn" = "number",
+         "id" = "planning_unit")
+
+eet_output <- read_csv(here("data/MBeetoutput_ssoln.txt")) %>% 
+  rename("eet_sltn" = "number",
+         "id" = "planning_unit")
+```
+
+```{r}
+sltn_parcels <- parcels %>% 
+  inner_join(basic_output) %>% 
+  inner_join(eet_output)
+```
+```{r}
+pal <- brewer.pal(5, "BrBG")
+
+tmap_mode("plot")
+tm_basemap("OpenStreetMap.HOT") +
+  tm_shape(sltn_parcels) +
+  tm_fill(c("basic_sltn", "eet_sltn"),
+          title = c("Frequency of Selection", "Selected Species"),
+              alpha = 0.7,
+              id = "id",
+              palette = pal)+
+  tm_compass(type = "arrow") +
+  tm_scale_bar()+
+  tm_layout(legend.outside = T)
+  
+tmap_save(filename = "comparison.jpg")
+  
+```
+
